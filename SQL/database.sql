@@ -46,7 +46,7 @@ CREATE TABLE [Кошелек]
 CREATE TABLE [Сеанс]
 ( 
 	[ИДСеанса]          integer  NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    [ИДКлиента]         integer  NOT NULL ,
+        [ИДКлиента]         integer  NOT NULL ,
 	[ИнвентарныйНомер]  integer  NOT NULL , CHECK([ИнвентарныйНомер]>=0), 
 	[ВремяНачала]       datetime  NOT NULL , CHECK([ВремяНачала]>=GETDATE()),
 	[ВремяОкончания]    datetime  NOT NULL , CHECK([ВремяОкончания]>GETDATE()),
