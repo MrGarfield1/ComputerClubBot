@@ -274,12 +274,19 @@ async def sessionclient_start(message: types.Message):
 #Инлайн-кнопка(колбэк-кнопка)
 async def allgames_start_inline(call: types.CallbackQuery):
     try:
-        cursor.execute("SELECT * FROM ВсеИгры")
+        cursor.execute("SELECT * FROM КатегорияКомпьютера")
         results = cursor.fetchall()
 
         txt=''
-        for row in results:
-            txt=txt+'Название игры: '+str(row[0])+'\nКатегория: '+str(row[1])+'\n\n'
+        for i in results:
+            txt+='Название категории: '+str(i[1])+"\n"+'Игры:\n'     
+            llist=[]
+            llist.append(str(i[1]))
+            cursor.execute("SELECT * FROM ВсеИгры WHERE Категория=?", llist)
+            results1 = cursor.fetchall()
+            for j in results1: 
+                txt+=str(j[0])+'\n' 
+            txt+='\n'        
     
         await call.message.answer(txt)
     except:
@@ -287,13 +294,19 @@ async def allgames_start_inline(call: types.CallbackQuery):
 
 async def allgames_start(message: types.Message):
     try:
-        cursor.execute("SELECT * FROM ВсеИгры")
+        cursor.execute("SELECT * FROM КатегорияКомпьютера")
         results = cursor.fetchall()
 
         txt=''
-        for row in results:
-            txt=txt+'Название игры: '+str(row[0])+'\nКатегория: '+str(row[1])+'\n\n'
-    
+        for i in results:
+            txt+='Название категории: '+str(i[1])+"\n"+'Игры:\n'     
+            llist=[]
+            llist.append(str(i[1]))
+            cursor.execute("SELECT * FROM ВсеИгры WHERE Категория=?", llist)
+            results1 = cursor.fetchall()
+            for j in results1: 
+                txt+=str(j[0])+'\n' 
+            txt+='\n'      
         await message.reply(txt)
     except:
         await message.reply("Ой! Что-то пошло не так")
