@@ -18,7 +18,8 @@ inladmin = [InlineKeyboardButton(text="Изменить цену категор�
             InlineKeyboardButton(text="Новая категория", callback_data="Admin_Category"),
             InlineKeyboardButton(text="Новый компьютер", callback_data="Admin_Computer"),
             InlineKeyboardButton(text="Все компьютеры", callback_data="Admin_ViewComputer"),
-            InlineKeyboardButton(text="Новая игра", callback_data="Admin_Game")]
+            InlineKeyboardButton(text="Новая игра", callback_data="Admin_Game"),
+            InlineKeyboardButton(text="Все игры (подробно)", callback_data="Admin_GameDetail")]
 greet_inladmin = InlineKeyboardMarkup(row_width=2).add(*inladmin)
 
 #Инлайн кнопки для вывода из бд категорий компьютеров
