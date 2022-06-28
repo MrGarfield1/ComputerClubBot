@@ -17,7 +17,7 @@ async def admin_becomeadmin(message: types.Message):
         with open("admins.txt", 'a') as file:
             file.write(str(message.from_user.id))
             file.write(" ")
-        await message.reply('Теперь вы администратор')
+        await message.reply('Теперь вы администратор', reply_markup=buttons.greet_btnAdmin)
 
 #==========================================================================
 #Кнопка для показа инлайн-кнопок с функциями админа
@@ -237,10 +237,38 @@ async def addgame_date(message: types.Message, state=FSMContext):
         connection.commit()
 
         await state.finish()
-        await message.reply('Игры добавлена')
+        await message.reply('Игра добавлена')
     except:
         await state.finish()
         await message.reply("Ой! Что-то пошло не так")    
+
+#Более подробный вывод всех игр, установленных на компьютерах
+#Инлайн-кнопка(колбэк-кнопка)
+async def allgamesdetail_start_inline(call: types.CallbackQuery):
+    try:
+        cursor.execute("SELECT * FROM ВсеИгры")
+        results = cursor.fetchall()
+
+        txt=''
+        for row in results:
+            txt=txt+'Название игры: '+str(row[0])+'\nКатегория: '+str(row[1])+'\n'
+            if str(row[2])!='NULL' and str(row[2])!='None':
+                txt+='Жанр игры: '+str(row[2])+'\n'
+            else:
+                txt+='Жанр игры не указан'+'\n'
+            if str(row[3])!='NULL' and str(row[3])!='None':
+                txt+='Разработчик игры: '+str(row[3])+'\n'
+            else:
+                txt+='Разработчик игры не указан'+'\n'     
+            if str(row[4])!='NULL' and str(row[4])!='None':
+                txt+='Дата выхода игры: '+str(row[4])+'\n'
+            else:
+                txt+='Дата выхода игры не указана'+'\n' 
+            txt+='\n' 
+    
+        await call.message.answer(txt)
+    except:
+        await call.message.answer("Ой! Что-то пошло не так")
 
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(admin_becomeadmin, Text(equals="Стать админом"), state=None)
@@ -263,3 +291,4 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(addgame_developer, state=AddGame.developer)
     dp.register_callback_query_handler(addgame_emptydate, text="Admin_Empty", state=AddGame.date)
     dp.register_message_handler(addgame_date, state=AddGame.date)
+    dp.register_callback_query_handler(allgamesdetail_start_inline, text="Admin_GameDetail")
