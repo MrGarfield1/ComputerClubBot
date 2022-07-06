@@ -1,4 +1,4 @@
-from aiogram import Dispatcher, types 
+from aiogram import Dispatcher, types
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
@@ -6,28 +6,31 @@ from create_bot import dp, bot
 from sql_bd import *
 import buttons
 
-#===========================================================
-#Регистрация клиента
+
+# ===========================================================
+# Регистрация клиента
 class Clients(StatesGroup):
     nickname = State()
     email = State()
     pasword = State()
     balance = State()
 
-#Инлайн-кнопка(колбэк-кнопка)
+
+# Инлайн-кнопка(колбэк-кнопка)
 async def clients_start_inline(call: types.CallbackQuery):
-    llist=[]
+    llist = []
     llist.append(call.from_user.username)
     info = cursor.execute('SELECT * FROM Клиент WHERE Никнейм=?', llist)
-    if info.fetchone() is None: 
+    if info.fetchone() is None:
         await Clients.nickname.set()
         await call.message.answer('Введите почту')
     else:
         await call.message.answer("Вы уже зарегистрированы")
         await bot.send_message(call.from_user.id, 'Вот ваши возможности:', reply_markup=buttons.greet_inlfunctions)
 
+
 async def clients_start(message: types.Message):
-    llist=[]
+    llist = []
     llist.append(message.from_user.username)
     info = cursor.execute('SELECT * FROM Клиент WHERE Никнейм=?', llist)
     if info.fetchone() is None:
@@ -37,16 +40,17 @@ async def clients_start(message: types.Message):
         await message.reply("Вы уже зарегистрированы")
         await bot.send_message(message.from_user.id, 'Вот ваши возможности:', reply_markup=buttons.greet_inlfunctions)
 
+
 async def client_nickname(message: types.Message, state=FSMContext):
     async with state.proxy() as data:
         data['nickname'] = message.from_user.username
     await Clients.next()
 
-    llist=[]
+    llist = []
     llist.append(message.text)
     info = cursor.execute('SELECT * FROM Клиент WHERE Почта=?', llist)
 
-    if info.fetchone() is None:  
+    if info.fetchone() is None:
         async with state.proxy() as data:
             data['email'] = message.text
         await Clients.next()
@@ -56,9 +60,10 @@ async def client_nickname(message: types.Message, state=FSMContext):
         await state.finish()
         await message.reply("Такая почта уже есть")
 
+
 async def client_pasword(message: types.Message, state=FSMContext):
     try:
-        if len(str(message.text))>=5:
+        if len(str(message.text)) >= 5:
             async with state.proxy() as data:
                 data['pasword'] = message.text
             await Clients.next()
@@ -73,28 +78,33 @@ async def client_pasword(message: types.Message, state=FSMContext):
 
             await message.reply('Регистрация прошла успешно')
 
-            await bot.send_message(message.from_user.id, 'Вот ваши возможности:', reply_markup=buttons.greet_inlfunctions)
+            await bot.send_message(message.from_user.id, 'Вот ваши возможности:',
+                                   reply_markup=buttons.greet_inlfunctions)
         else:
             await state.finish()
             await message.reply('Пароль меньше 5 символов')
     except:
         await message.reply("Ой! Что-то пошло не так")
-        await state.finish()       
+        await state.finish()
 
-#===========================================================
-#Пополнение кошелька
+
+# ===========================================================
+# Пополнение кошелька
 class Walet(StatesGroup):
     nickname = State()
-    sum = State()    
+    sum = State()
 
-#Инлайн-кнопка(колбэк-кнопка)
+
+# Инлайн-кнопка(колбэк-кнопка)
 async def walet_start_inline(call: types.CallbackQuery):
     await Walet.nickname.set()
     await call.message.answer('Введите сумму пополнения')
 
+
 async def walet_start(message: types.Message):
     await Walet.nickname.set()
     await message.reply('Введите сумму пополнения')
+
 
 async def walet_sum(message: types.Message, state=FSMContext):
     try:
@@ -102,14 +112,14 @@ async def walet_sum(message: types.Message, state=FSMContext):
             data['nickname'] = message.from_user.username
         await Walet.next()
 
-        if int(message.text)>0:
+        if int(message.text) > 0:
             async with state.proxy() as data:
                 data['sum'] = message.text
 
             cursor.execute("EXEC Пополнение_в_кошельке ?, ?", tuple(data.values()))
             connection.commit()
 
-            await state.finish()    
+            await state.finish()
 
             await message.reply('Успешно пополнено')
         else:
@@ -119,84 +129,90 @@ async def walet_sum(message: types.Message, state=FSMContext):
         await message.reply("Ой! Что-то пошло не так")
         await state.finish()
 
-#===========================================================
-#Баланс кошелька
-#Инлайн-кнопка(колбэк-кнопка)
+
+# ===========================================================
+# Баланс кошелька
+# Инлайн-кнопка(колбэк-кнопка)
 async def balance_start_inline(call: types.CallbackQuery):
     try:
-        llist=[]
-        llist.append(call.from_user.username)
+        llist = [call.from_user.username]
 
         cursor.execute("SELECT БалансКошелька FROM Клиент WHERE Никнейм=?", llist)
         results = cursor.fetchall()
 
         for row in results:
-            balance= str(row[0])
+            balance = str(row[0])
 
-        await call.message.answer('Баланс '+call.from_user.username+': '+balance+' руб.') 
+        await call.message.answer('Баланс ' + call.from_user.username + ': ' + balance + ' руб.')
     except:
-        await call.message.answer("Ой! Что-то пошло не так") 
+        await call.message.answer("Ой! Что-то пошло не так")
+
 
 async def balance_start(message: types.Message):
     try:
-        llist=[]
-        llist.append(message.from_user.username)
+        llist = [message.from_user.username]
 
         cursor.execute("SELECT БалансКошелька FROM Клиент WHERE Никнейм=?", llist)
         results = cursor.fetchall()
 
         for row in results:
-            balance= str(row[0])
+            balance = str(row[0])
 
-        await message.reply('Баланс '+message.from_user.username+': '+balance+' руб.') 
+        await message.reply('Баланс ' + message.from_user.username + ': ' + balance + ' руб.')
     except:
         await message.reply("Ой! Что-то пошло не так")
 
-#===========================================================
-#Вывод всех категорий компьютеров
-#Инлайн-кнопка(колбэк-кнопка)
+
+# ===========================================================
+# Вывод всех категорий компьютеров
+# Инлайн-кнопка(колбэк-кнопка)
 async def category_start_inline(call: types.CallbackQuery):
     try:
         cursor.execute("SELECT Категория, ЦенаЗаЧасИгры FROM КатегорияКомпьютера")
         results = cursor.fetchall()
-        txt=''
+        txt = ''
         for row in results:
-            txt=txt+'Категория: '+str(row[0])+'\nЦена: '+str(row[1])+' руб.'+'\n\n'
+            txt = txt + 'Категория: ' + str(row[0]) + '\nЦена: ' + str(row[1]) + ' руб.' + '\n\n'
         await call.message.answer(txt)
     except:
         await call.message.answer("Ой! Что-то пошло не так")
+
 
 async def category_start(message: types.Message):
     try:
         cursor.execute("SELECT Категория, ЦенаЗаЧасИгры FROM КатегорияКомпьютера")
         results = cursor.fetchall()
 
-        txt=''
+        txt = ''
         for row in results:
-            txt=txt+'Категория: '+str(row[0])+'\nЦена: '+str(row[1])+' руб.'+'\n\n'
+            txt = txt + 'Категория: ' + str(row[0]) + '\nЦена: ' + str(row[1]) + ' руб.' + '\n\n'
 
         await message.reply(txt)
     except:
         await message.reply("Ой! Что-то пошло не так")
 
-#===========================================================
-#Покупка сеанса
+
+# ===========================================================
+# Покупка сеанса
 class Session(StatesGroup):
     nickname = State()
     category = State()
     timen = State()
     timek = State()
 
-#Инлайн-кнопка(колбэк-кнопка)
+
+# Инлайн-кнопка(колбэк-кнопка)
 async def session_start_inline(call: types.CallbackQuery):
     await Session.nickname.set()
     await call.message.answer('Выберите категорию компьютера', reply_markup=buttons.AddingACategory())
+
 
 async def session_start(message: types.Message):
     await Session.nickname.set()
     await message.reply('Выберите категорию компьютера', reply_markup=buttons.AddingACategory())
 
-#Инлайн-кнопка(колбэк-кнопка)
+
+# Инлайн-кнопка(колбэк-кнопка)
 async def session_category(call: types.CallbackQuery, state=FSMContext):
     async with state.proxy() as data:
         data['nickname'] = call.from_user.username
@@ -211,13 +227,15 @@ async def session_category(call: types.CallbackQuery, state=FSMContext):
             async with state.proxy() as data:
                 data['category'] = str(row[0])
             await Session.next()
-            await call.message.reply("Введите время начала\nВ формате день-месяц-год часы:минуты")          
+            await call.message.reply("Введите время начала\nВ формате день-месяц-год часы:минуты")
+
 
 async def session_timen(message: types.Message, state=FSMContext):
     async with state.proxy() as data:
         data['timen'] = message.text
     await Session.next()
     await message.reply("Введите время окончания\nВ формате день-месяц-год часы:минуты")
+
 
 async def session_timek(message: types.Message, state=FSMContext):
     try:
@@ -232,84 +250,122 @@ async def session_timek(message: types.Message, state=FSMContext):
         await message.reply('Сеанс куплен')
     except:
         await message.reply("Ой! Что-то пошло не так")
-        await state.finish()       
+        await state.finish()
 
-#==========================================================================
-#Вывод всех купленных сеансов пользователя
-#Инлайн-кнопка(колбэк-кнопка)
+    # ==========================================================================
+
+
+# Вывод всех купленных сеансов пользователя
+# Инлайн-кнопка(колбэк-кнопка)
 async def sessionclient_start_inline(call: types.CallbackQuery):
     try:
-        llist=[]
+        llist = []
         llist.append(call.from_user.username)
 
         cursor.execute("EXEC Просмотр_сеансов_пользователя ?", llist)
         results = cursor.fetchall()
 
-        txt=''
+        txt = ''
         for row in results:
-            txt=txt+'Цена: '+str(row[0])+'\n'+'Номер компьютера: '+str(row[1])+'\n'+'Категория компьютера: '+str(row[2])+'\n''Время начала: '+str(row[3])+'\n'+'Время окончания: '+str(row[4])+'\n'+'Время покупки: '+str(row[5])+'\n\n\n'
+            txt = txt + 'Цена: ' + str(row[0]) + '\n' + 'Номер компьютера: ' + str(
+                row[1]) + '\n' + 'Категория компьютера: ' + str(row[2]) + '\n''Время начала: ' + str(
+                row[3]) + '\n' + 'Время окончания: ' + str(row[4]) + '\n' + 'Время покупки: ' + str(row[5]) + '\n\n\n'
 
         await call.message.answer(txt)
     except:
         await call.message.answer("Ой! Что-то пошло не так")
 
+
 async def sessionclient_start(message: types.Message):
     try:
-        llist=[]
-        llist.append(message.from_user.username)
+        llist = [message.from_user.username]
 
         cursor.execute("EXEC Просмотр_сеансов_пользователя ?", llist)
         results = cursor.fetchall()
 
-        txt=''
+        txt = ''
         for row in results:
-            txt=txt+'Цена: '+str(row[0])+'\n'+'Номер компьютера: '+str(row[1])+'\n'+'Категория компьютера: '+str(row[2])+'\n''Время начала: '+str(row[3])+'\n'+'Время окончания: '+str(row[4])+'\n'+'Время покупки: '+str(row[5])+'\n\n\n'
+            txt = txt + 'Цена: ' + str(row[0]) + '\n' + 'Номер компьютера: ' + str(
+                row[1]) + '\n' + 'Категория компьютера: ' + str(row[2]) + '\n''Время начала: ' + str(
+                row[3]) + '\n' + 'Время окончания: ' + str(row[4]) + '\n' + 'Время покупки: ' + str(row[5]) + '\n\n\n'
 
-        await message.reply(txt) 
+        await message.reply(txt)
     except:
         await message.reply("Ой! Что-то пошло не так")
 
-#==========================================================================
-#Вывод всех игр, установленных на компьютерах
-#Инлайн-кнопка(колбэк-кнопка)
+
+# ==========================================================================
+# Вывод всех игр, установленных на компьютерах
+# Инлайн-кнопка(колбэк-кнопка)
 async def allgames_start_inline(call: types.CallbackQuery):
     try:
         cursor.execute("SELECT * FROM КатегорияКомпьютера")
         results = cursor.fetchall()
 
-        txt=''
+        txt = ''
         for i in results:
-            txt+='Название категории: '+str(i[1])+"\n"+'Игры:\n'     
-            llist=[]
-            llist.append(str(i[1]))
-            cursor.execute("SELECT * FROM ВсеИгры WHERE Категория=?", llist)
+            txt += 'Название категории: ' + str(i[1]) + "\n" + 'Игры:\n'
+            llist = [str(i[0])]
+            cursor.execute("SELECT НазваниеИгры FROM Игра и INNER JOIN ИграКатегория ик ON и.ИДИгры=ик.ИДИгры WHERE "
+                           "ик.ИДКатегории=?", llist)
             results1 = cursor.fetchall()
-            for j in results1: 
-                txt+=str(j[0])+'\n' 
-            txt+='\n'        
-    
-        await call.message.answer(txt)
+            for j in results1:
+                txt += str(j[0]) + '\n'
+            txt += '\n'
+
+        await call.message.answer(txt, reply_markup=buttons.greet_inldetailaboutgame)
     except:
         await call.message.answer("Ой! Что-то пошло не так")
+
 
 async def allgames_start(message: types.Message):
     try:
         cursor.execute("SELECT * FROM КатегорияКомпьютера")
         results = cursor.fetchall()
 
-        txt=''
+        txt = ''
         for i in results:
-            txt+='Название категории: '+str(i[1])+"\n"+'Игры:\n'     
-            llist=[]
-            llist.append(str(i[1]))
-            cursor.execute("SELECT * FROM ВсеИгры WHERE Категория=?", llist)
+            txt += 'Название категории: ' + str(i[1]) + "\n" + 'Игры:\n'
+            llist = [str(i[0])]
+            cursor.execute("SELECT НазваниеИгры FROM Игра и INNER JOIN ИграКатегория ик ON и.ИДИгры=ик.ИДИгры WHERE "
+                           "ик.ИДКатегории=?", llist)
             results1 = cursor.fetchall()
-            for j in results1: 
-                txt+=str(j[0])+'\n' 
-            txt+='\n'      
-        await message.reply(txt)
+            for j in results1:
+                txt += str(j[0]) + '\n'
+            txt += '\n'
+        await message.reply(txt, reply_markup=buttons.greet_inldetailaboutgame)
     except:
         await message.reply("Ой! Что-то пошло не так")
+
+
+# Более подробный вывод всех игр, установленных на компьютерах
+# Инлайн-кнопка(колбэк-кнопка)
+async def allgamesdetail_start_inline(call: types.CallbackQuery):
+    try:
+        cursor.execute("SELECT * FROM ВсеИгры")
+        results = cursor.fetchall()
+
+        txt = ''
+        for row in results:
+            txt = txt + 'Название игры: ' + str(row[0]) + '\n'
+            if str(row[1]) != 'NULL' and str(row[1]) != 'None':
+                txt += 'Жанр игры: ' + str(row[1]) + '\n'
+            else:
+                txt += 'Жанр игры не указан' + '\n'
+            if str(row[2]) != 'NULL' and str(row[2]) != 'None':
+                txt += 'Разработчик игры: ' + str(row[2]) + '\n'
+            else:
+                txt += 'Разработчик игры не указан' + '\n'
+            if str(row[3]) != 'NULL' and str(row[3]) != 'None':
+                txt += 'Дата выхода игры: ' + str(row[3]) + '\n'
+            else:
+                txt += 'Дата выхода игры не указана' + '\n'
+            txt += '\n'
+
+        await call.message.answer(txt)
+    except:
+        await call.message.answer("Ой! Что-то пошло не так")
+
 
 def register_handlers_client(dp: Dispatcher):
     dp.register_callback_query_handler(clients_start_inline, text="registration")
@@ -332,3 +388,4 @@ def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(sessionclient_start, commands='all_sessions')
     dp.register_callback_query_handler(allgames_start_inline, text="all_games")
     dp.register_message_handler(allgames_start, commands='all_games')
+    dp.register_callback_query_handler(allgamesdetail_start_inline, text="Detail_About_Game")
