@@ -18,19 +18,28 @@ inladmin = [InlineKeyboardButton(text="Изменить цену категор�
             InlineKeyboardButton(text="Новая категория", callback_data="Admin_Category"),
             InlineKeyboardButton(text="Новый компьютер", callback_data="Admin_Computer"),
             InlineKeyboardButton(text="Все компьютеры", callback_data="Admin_ViewComputer"),
-            InlineKeyboardButton(text="Новая игра", callback_data="Admin_Game"),
-            InlineKeyboardButton(text="Все игры (подробно)", callback_data="Admin_GameDetail")]
+            InlineKeyboardButton(text="Операции с играми", callback_data="Admin_Game")]
 greet_inladmin = InlineKeyboardMarkup(row_width=2).add(*inladmin)
 
-#Инлайн кнопки для вывода из бд категорий компьютеров
+inladmingame = [InlineKeyboardButton(text="Новая игра", callback_data="Admin_NewGame"),
+                InlineKeyboardButton(text="Категория игре", callback_data="Admin_CategoryGame"),
+                InlineKeyboardButton(text="Изменить игру", callback_data="Admin_ChangeGame")]
+greet_inladmingame = InlineKeyboardMarkup(row_width=2).add(*inladmingame)
+
+
+# Инлайн кнопки для вывода из бд категорий компьютеров
 def AddingACategory():
     cursor.execute("SELECT Категория FROM КатегорияКомпьютера")
     results = cursor.fetchall()
-    inlcategories=[]
+    inlcategories = []
     for row in results:
         inlcategories.append(InlineKeyboardButton(text=str(row[0]), callback_data=f'Category_{row[0]}'))
-    greet_inlcategories=InlineKeyboardMarkup(row_width=3).add(*inlcategories)
+    greet_inlcategories = InlineKeyboardMarkup(row_width=3).add(*inlcategories)
     return greet_inlcategories
 
-#Инлайн кнопка оставить поле не заполненным (NULL)
+
+greet_inldetailaboutgame = InlineKeyboardMarkup().add(
+    InlineKeyboardButton(text="Подробнее об играх", callback_data="Detail_About_Game"))
+
+# Инлайн кнопка оставить поле не заполненным (NULL)
 greet_inladminempty = InlineKeyboardMarkup().add(InlineKeyboardButton(text="Не заполнять", callback_data="Admin_Empty"))
