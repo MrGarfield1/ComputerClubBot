@@ -304,6 +304,90 @@ async def addcategorygame_name(message: types.Message, state=FSMContext):
         await message.reply("Ой! Что-то пошло не так")
 
 
+# ==========================================================================
+# Изменение игры
+class ChangeGame(StatesGroup):
+    name = State()
+    cell = State()
+    cellchange = State()
+
+
+# Инлайн-кнопка(колбэк-кнопка)
+async def changegame_start_inline(call: types.CallbackQuery):
+    await ChangeGame.name.set()
+    await call.message.answer('Введите название игры:')
+
+
+async def changegame_ganre(message: types.Message, state=FSMContext):
+    try:
+        async with state.proxy() as data:
+            data['name'] = message.text
+
+        cursor.execute("SELECT * FROM ВсеИгры WHERE НазваниеИгры=?", tuple(data.values()))
+        results = cursor.fetchall()
+
+        txt = ''
+        for row in results:
+            txt = txt + 'Название игры: ' + str(row[0]) + '\n'
+            if str(row[1]) != 'NULL' and str(row[1]) != 'None':
+                txt += 'Жанр игры: ' + str(row[1]) + '\n'
+            else:
+                txt += 'Жанр игры не указан' + '\n'
+            if str(row[2]) != 'NULL' and str(row[2]) != 'None':
+                txt += 'Разработчик игры: ' + str(row[2]) + '\n'
+            else:
+                txt += 'Разработчик игры не указан' + '\n'
+            if str(row[3]) != 'NULL' and str(row[3]) != 'None':
+                txt += 'Дата выхода игры: ' + str(row[3]) + '\n'
+            else:
+                txt += 'Дата выхода игры не указана' + '\n'
+            txt += '\n'
+
+        await ChangeGame.next()
+        await message.answer(txt)
+        await message.answer('Что вы хотите изменить:', reply_markup=buttons.greet_inladminchangegame)
+    except:
+        await state.finish()
+        await message.reply("Ой! Что-то пошло не так")
+
+
+async def changegame_cell(call: types.CallbackQuery, state=FSMContext):
+    try:
+        action = call.data
+        if action == 'Admin_Game_Genre':
+            async with state.proxy() as data:
+                data['cell'] = 'Жанр'
+            await call.message.reply('Введите жанр игры:')
+        elif action == 'Admin_Game_Developer':
+            async with state.proxy() as data:
+                data['cell'] = 'Разработчик'
+            await call.message.reply('Введите разработчика игры:')
+        elif action == 'Admin_Game_Date':
+            async with state.proxy() as data:
+                data['cell'] = 'Дата выхода'
+            await call.message.reply('Введите дату выхода игры:')
+
+        await ChangeGame.next()
+    except:
+        await state.finish()
+        await call.message.reply("Ой! Что-то пошло не так")
+
+
+async def changegame_cellchange(message: types.Message, state=FSMContext):
+    try:
+        async with state.proxy() as data:
+            data['cellchange'] = message.text
+
+        cursor.execute("EXEC Изменение_игры ?, ?, ?", tuple(data.values()))
+        connection.commit()
+
+        await state.finish()
+        await message.reply('Игра изменена')
+    except:
+        await state.finish()
+        await message.reply("Ой! Что-то пошло не так")
+
+
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(admin_becomeadmin, Text(equals="Стать админом"), state=None)
     dp.register_message_handler(admin_start, Text(equals="Функции администратора"), state=None)
@@ -326,5 +410,10 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_callback_query_handler(addgame_emptydate, text="Admin_Empty", state=AddGame.date)
     dp.register_message_handler(addgame_date, state=AddGame.date)
     dp.register_callback_query_handler(addcategorygame_start_inline, text="Admin_CategoryGame")
-    dp.register_callback_query_handler(addcategorygame_category, Text(startswith="Category_"), state=AddCategoryGame.category)
+    dp.register_callback_query_handler(addcategorygame_category, Text(startswith="Category_"),
+                                       state=AddCategoryGame.category)
     dp.register_message_handler(addcategorygame_name, state=AddCategoryGame.name)
+    dp.register_callback_query_handler(changegame_start_inline, text="Admin_ChangeGame")
+    dp.register_message_handler(changegame_ganre, content_types=['text'], state=ChangeGame.name)
+    dp.register_callback_query_handler(changegame_cell, Text(startswith="Admin_Game_"), state=ChangeGame.cell)
+    dp.register_message_handler(changegame_cellchange, state=ChangeGame.cellchange)
