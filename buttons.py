@@ -26,6 +26,12 @@ inladmingame = [InlineKeyboardButton(text="Новая игра", callback_data="
                 InlineKeyboardButton(text="Изменить игру", callback_data="Admin_ChangeGame")]
 greet_inladmingame = InlineKeyboardMarkup(row_width=2).add(*inladmingame)
 
+# Изменение игры
+inladminchangegame = [InlineKeyboardButton(text="Жанр", callback_data="Admin_Game_Genre"),
+                      InlineKeyboardButton(text="Разработчика", callback_data="Admin_Game_Developer"),
+                      InlineKeyboardButton(text="Дату выхода", callback_data="Admin_Game_Date")]
+greet_inladminchangegame = InlineKeyboardMarkup(row_width=2).add(*inladminchangegame)
+
 
 # Инлайн кнопки для вывода из бд категорий компьютеров
 def AddingACategory():
