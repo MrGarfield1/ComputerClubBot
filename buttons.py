@@ -23,7 +23,8 @@ greet_inladmin = InlineKeyboardMarkup(row_width=2).add(*inladmin)
 
 inladmingame = [InlineKeyboardButton(text="Новая игра", callback_data="Admin_NewGame"),
                 InlineKeyboardButton(text="Категория игре", callback_data="Admin_CategoryGame"),
-                InlineKeyboardButton(text="Изменить игру", callback_data="Admin_ChangeGame")]
+                InlineKeyboardButton(text="Изменить игру", callback_data="Admin_ChangeGame"),
+                InlineKeyboardButton(text="Удалить игру", callback_data="Admin_DeleteGame")]
 greet_inladmingame = InlineKeyboardMarkup(row_width=2).add(*inladmingame)
 
 # Изменение игры
