@@ -388,6 +388,37 @@ async def changegame_cellchange(message: types.Message, state=FSMContext):
         await message.reply("Ой! Что-то пошло не так")
 
 
+# ==========================================================================
+# Удаление игры
+class DeleteGame(StatesGroup):
+    name = State()
+
+
+# Инлайн-кнопка(колбэк-кнопка)
+async def deletegame_start_inline(call: types.CallbackQuery):
+    await DeleteGame.name.set()
+    await call.message.answer('Введите название игры:')
+
+
+async def deletegame_name(message: types.Message, state=FSMContext):
+    try:
+        async with state.proxy() as data:
+            data['name'] = message.text
+
+        info = cursor.execute('SELECT * FROM Игра WHERE НазваниеИгры=?', tuple(data.values()))
+        if info.fetchone() is None:
+            await state.finish()
+            await message.answer('Такой игры нет')
+        else:
+            cursor.execute("EXEC Удаление_игр ?", tuple(data.values()))
+            connection.commit()
+            await state.finish()
+            await message.answer('Игра удалена')
+    except:
+        await state.finish()
+        await message.reply("Ой! Что-то пошло не так")
+
+
 def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(admin_becomeadmin, Text(equals="Стать админом"), state=None)
     dp.register_message_handler(admin_start, Text(equals="Функции администратора"), state=None)
@@ -417,3 +448,5 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(changegame_ganre, content_types=['text'], state=ChangeGame.name)
     dp.register_callback_query_handler(changegame_cell, Text(startswith="Admin_Game_"), state=ChangeGame.cell)
     dp.register_message_handler(changegame_cellchange, state=ChangeGame.cellchange)
+    dp.register_callback_query_handler(deletegame_start_inline, text="Admin_DeleteGame")
+    dp.register_message_handler(deletegame_name, content_types=['text'], state=DeleteGame.name)
