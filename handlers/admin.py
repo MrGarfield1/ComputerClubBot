@@ -40,8 +40,6 @@ class ChangePrice(StatesGroup):
 
 
 # Инлайн-кнопка(колбэк-кнопка)
-
-
 async def changeprice_start_inline(call: types.CallbackQuery):
     await ChangePrice.category.set()
     await call.message.reply('Введите категорию компьютера')
@@ -83,8 +81,6 @@ class AddCategory(StatesGroup):
 
 
 # Инлайн-кнопка(колбэк-кнопка)
-
-
 async def addcategory_start_inline(call: types.CallbackQuery):
     await AddCategory.category.set()
     await call.message.reply('Введите название категории компьютеров')
